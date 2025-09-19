@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import Salary from './pages/Salary';
 import Attendance from './pages/Attendance';
 import LeaveManagement from './pages/LeaveManagement';
+import AttendenceList from './pages/AttendenceList';
 // import './App.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="salary" element={<Salary />} />
               <Route path="attendance" element={<Attendance />} />
+              <Route path="attendance-list" element={<AttendenceList/>}/>
               <Route path="leave" element={<LeaveManagement />} />
             </Route>
           </Routes>
