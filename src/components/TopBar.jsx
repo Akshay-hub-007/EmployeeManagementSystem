@@ -23,7 +23,10 @@ const TopBar = ({ title, onMenuToggle }) => {
             <div className="text-xs text-gray-500">{user?.position}</div>
           </div>
           <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-lg font-bold overflow-hidden">
-            {user?.avatar}
+            {user?.username
+              ?.split(' ')
+              .map(word => word.charAt(0).toUpperCase())
+              .join('')}
           </div>
         </div>
       </div>

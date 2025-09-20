@@ -50,12 +50,14 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (updatedData) => {
     try {
       const res = await axios.put(
-        `http://localhost:8086/api/users/${user?.id}`,
+        `http://localhost:8086/updateDetails/${user?.id}`,
         updatedData,
         { withCredentials: true }
       );
-      setUser(res.data);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      console.log(res)
+      setUser(res.data)
+      // setUser(res.data);
+      // localStorage.setItem('user', JSON.stringify(res.data));
       return { success: true, data: res.data };
     } catch (error) {
       console.error('Profile update failed:', error);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import {  useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -13,7 +13,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate()
 
-useEffect(() => {
+  useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await axios.get("http://localhost:8086/authenticated", {
@@ -22,14 +22,17 @@ useEffect(() => {
 
         if (res.status == 200) {
           navigate("/");
+        } else {
+          navigate("/login")
         }
       } catch (err) {
         console.error(err);
-        navigate("/login"); // 👈 redirect on error
+        // if (!user) navigate("/login")
+        navigate("/login");
       }
     };
     checkAuth()
-  },[])
+  }, [])
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -37,30 +40,30 @@ useEffect(() => {
     });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    const res = await axios.post("http://localhost:8086/sign", {
-      email: formData.email,
-      password: formData.password,
-    },{withCredentials:true});
-    console.log(res)
-    console.log(res.status)
-    if (res.status === 200) {
+    try {
+      const res = await axios.post("http://localhost:8086/sign", {
+        email: formData.email,
+        password: formData.password,
+      }, { withCredentials: true });
+      console.log(res)
+      console.log(res.status)
+      if (res.status === 200) {
 
-      login(res.data.user)
-      console.log("navigating....")
-      navigate("/");
+        login(res.data.user)
+        console.log("navigating....")
+        navigate("/");
+      }
+
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-  } catch (error) {
-    console.error("Login failed:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
 

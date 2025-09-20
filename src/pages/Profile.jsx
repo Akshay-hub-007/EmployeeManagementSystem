@@ -1,93 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, Edit3, Save, X } from 'lucide-react';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.username || '',
-    email: user?.email || '',
-    phone: user?.phoneNumber || '',
-    address: user?.address || '',
-    dateOfBirth: user?.dateOfBirth || '1990-01-01',
-    department: user?.department || '',
-    position: user?.position || '',
-    joinDate: user?.joinedAt || new Date().toISOString().split('T')[0],
-    manager: user?.manager || '',
-    employeeId: user?.id || '',
-    emergencyContact: user?.emergencyContact || ''
+    name: '',
+    email: '',
+    phoneNumber: '',
+    address: '',
+    dateOfBirth: '',
+    department: '',
+    position: '',
+    joinDate: '',
+    manager: '',
+    employeeId: '',
+    emergencyContact: ''
   });
 
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.username || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+        address: user.address || '',
+        dateOfBirth: user.dateOfBirth || '1990-01-01',
+        department: user.department || '',
+        position: user.position || '',
+        joinDate: user.joinedAt || new Date().toISOString().split('T')[0],
+        manager: 'Sarah Johnson',
+        employeeId: user.id || '',
+        emergencyContact: ''
+      });
+    }
+  }, [user]);
+
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = async () => {
-    // Prepare data for API (map frontend fields to backend fields if needed)
-    const payload = {
-      username: formData.name,
-      email: formData.email,
-      phoneNumber: formData.phone,
-      address: formData.address,
-      dateOfBirth: formData.dateOfBirth,
-      department: formData.department,
-      position: formData.position,
-      joinedAt: formData.joinDate,
-      manager: formData.manager,
-      id: formData.employeeId,
-      emergencyContact: formData.emergencyContact
-    };
-    const result = await updateProfile(payload);
-    if (result.success) {
-      setIsEditing(false);
-    } else {
-      alert('Failed to update profile.');
-    }
+  const handleSave = () => {
+    updateProfile(formData);
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
     setFormData({
-      name: user?.username || '',
-      email: user?.email || '',
-      phone: user?.phoneNumber || '',
-      address: user?.address || '',
-      dateOfBirth: user?.dateOfBirth || '1990-01-01',
-      department: user?.department || '',
-      position: user?.position || '',
-      joinDate: user?.joinedAt || new Date().toISOString().split('T')[0],
-      manager: user?.manager || '',
-      employeeId: user?.id || '',
-      emergencyContact: user?.emergencyContact || ''
+      name: user.username || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || '',
+      address: user.address || '',
+      dateOfBirth: user.dateOfBirth || '1990-01-01',
+      department: user.department || '',
+      position: user.position || '',
+      joinDate: user.joinedAt || new Date().toISOString().split('T')[0],
+      manager: 'Sarah Johnson',
+      employeeId: user.id || '',
+      emergencyContact: ''
     });
     setIsEditing(false);
   };
-
-  const ProfileField = ({ icon: Icon, label, value, name, type = 'text', placeholder = '' }) => (
-    <div className="mb-6">
-      <label className="flex items-center gap-2 font-medium text-gray-700 mb-1">
-        <Icon size={16} />
-        {label}
-      </label>
-      {isEditing ? (
-        <input
-          type={type}
-          name={name}
-          value={value || ''}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      ) : (
-        <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
-          {type === 'date' ? new Date(value).toLocaleDateString() : value || '-'}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="animate-fade-in">
@@ -104,62 +78,79 @@ const Profile = () => {
         <div className="flex gap-2">
           {isEditing ? (
             <>
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition-colors duration-150" onClick={handleCancel}>
-                <X size={16} />
-                Cancel
+              <button onClick={handleCancel} className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2">
+                <X size={16} /> Cancel
               </button>
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150" onClick={handleSave}>
-                <Save size={16} />
-                Save Changes
+              <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2">
+                <Save size={16} /> Save Changes
               </button>
             </>
           ) : (
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150" onClick={() => setIsEditing(true)}>
-              <Edit3 size={16} />
-              Edit Profile
+            <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2">
+              <Edit3 size={16} /> Edit Profile
             </button>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-10">
-        {/* Profile Picture Section */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="text-center">
-            <div className="w-30 h-30 rounded-full bg-blue-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-8">
-              {user?.avatar || 'JD'}
-            </div>
-            <h3 className="text-lg font-semibold mb-1">{formData.name}</h3>
-            <p className="text-gray-600 mb-2">{formData.position}</p>
-            <p className="text-sm text-gray-600 mb-6">Employee ID: {formData.employeeId}</p>
-            <div className="p-4 bg-green-50 rounded-lg mb-4">
-              <p className="text-sm text-green-600 m-0">
-                <strong>Department</strong><br />
-                {formData.department || '-'}
-              </p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-600 m-0">
-                <strong>Joined</strong><br />
-                {formData.joinDate ? new Date(formData.joinDate).toLocaleDateString() : '-'}
-              </p>
-            </div>
+        {/* Profile Picture */}
+        <div className="bg-white rounded-xl shadow p-6 text-center">
+          <div className="w-30 h-30 rounded-full bg-blue-500 flex items-center justify-center text-white text-4xl font-bold mx-auto mb-8">
+            {user?.username
+              ?.split(' ')
+              .map(word => word.charAt(0).toUpperCase())
+              .join('')}
+          </div>
+          <h3 className="text-lg font-semibold mb-1">{formData.name}</h3>
+          <p className="text-gray-600 mb-2">{formData.position}</p>
+          <p className="text-sm text-gray-600 mb-6">Employee ID: {formData.employeeId}</p>
+          <div className="p-4 bg-green-50 rounded-lg mb-4">
+            <p className="text-sm text-green-600 m-0">
+              <strong>Department</strong><br />
+              {formData.department}
+            </p>
+          </div>
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-600 m-0">
+              <strong>Joined</strong><br />
+              {new Date(formData.joinDate).toLocaleDateString()}
+            </p>
           </div>
         </div>
 
-        {/* Profile Information */}
+        {/* Personal Information */}
         <div className="bg-white rounded-xl shadow p-6">
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Personal Information</h3>
-            <p className="text-gray-500 text-sm">Your personal and contact details</p>
-          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <ProfileField icon={User} label="Full Name" value={formData.name} name="name" placeholder="Enter full name" />
-            <ProfileField icon={Mail} label="Email Address" value={formData.email} name="email" type="email" placeholder="Enter email address" />
-            <ProfileField icon={Phone} label="Phone Number" value={formData.phone} name="phone" type="tel" placeholder="Enter phone number" />
-            <ProfileField icon={Calendar} label="Date of Birth" value={formData.dateOfBirth} name="dateOfBirth" type="date" placeholder="Select date of birth" />
+            <div>
+              <label className="flex items-center gap-2"><User size={16} /> Full Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleInputChange} disabled={!isEditing}
+                className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2"><Mail size={16} /> Email</label>
+              <input type="email" name="email" value={formData.email} onChange={handleInputChange} disabled={!isEditing}
+                className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2"><Phone size={16} /> Phone</label>
+              <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} disabled={!isEditing}
+                className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2"><Calendar size={16} /> Date of Birth</label>
+              <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} disabled={!isEditing}
+                className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+            </div>
+
             <div className="md:col-span-2">
-              <ProfileField icon={MapPin} label="Address" value={formData.address} name="address" placeholder="Enter address" />
+              <label className="flex items-center gap-2"><MapPin size={16} /> Address</label>
+              <input type="text" name="address" value={formData.address} onChange={handleInputChange} disabled={!isEditing}
+                className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
             </div>
           </div>
         </div>
@@ -167,17 +158,36 @@ const Profile = () => {
 
       {/* Work Information */}
       <div className="bg-white rounded-xl shadow p-6 mt-10">
-        <div className="mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Work Information</h3>
-          <p className="text-gray-500 text-sm">Job details and organizational information</p>
-        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-4">Work Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ProfileField icon={Briefcase} label="Position" value={formData.position} name="position" placeholder="Enter position" />
-          <ProfileField icon={User} label="Department" value={formData.department} name="department" placeholder="Enter department" />
-          <ProfileField icon={User} label="Reporting Manager" value={formData.manager} name="manager" placeholder="Enter manager name" />
-          <ProfileField icon={Calendar} label="Join Date" value={formData.joinDate} name="joinDate" type="date" placeholder="Select join date" />
+          <div>
+            <label className="flex items-center gap-2"><Briefcase size={16} /> Position</label>
+            <input type="text" name="position" value={formData.position} onChange={handleInputChange} disabled={!isEditing}
+              className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2"><User size={16} /> Department</label>
+            <input type="text" name="department" value={formData.department} onChange={handleInputChange} disabled={!isEditing}
+              className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2"><User size={16} /> Reporting Manager</label>
+            <input type="text" name="manager" value={formData.manager} onChange={handleInputChange} disabled={!isEditing}
+              className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2"><Calendar size={16} /> Join Date</label>
+            <input type="date" name="joinDate" value={formData.joinDate} onChange={handleInputChange} disabled={!isEditing}
+              className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
+          </div>
+
           <div className="md:col-span-2">
-            <ProfileField icon={Phone} label="Emergency Contact" value={formData.emergencyContact} name="emergencyContact" placeholder="Enter emergency contact" />
+            <label className="flex items-center gap-2"><Phone size={16} /> Emergency Contact</label>
+            <input type="text" name="emergencyContact" value={formData.emergencyContact} onChange={handleInputChange} disabled={!isEditing}
+              className={`w-full px-4 py-2 border rounded-lg ${isEditing ? 'border-gray-300 focus:ring-2 focus:ring-blue-500' : 'border-gray-200 bg-gray-50'}`} />
           </div>
         </div>
       </div>
