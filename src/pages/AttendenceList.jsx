@@ -7,7 +7,8 @@ const AttendanceList = () => {
     const [attendanceList, setAttendanceList] = useState([]);
     const [filteredList, setFilteredList] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("today"); // default filter
+    const [filter, setFilter] = useState("today"); // default date filter
+    const [statusFilter, setStatusFilter] = useState("all"); // status filter
 
     useEffect(() => {
         const fetchAttendance = async () => {
@@ -27,24 +28,25 @@ const AttendanceList = () => {
         fetchAttendance();
     }, []);
 
-    // Filter attendance based on dropdown selection
+    // Filter attendance based on dropdown selection and status
     useEffect(() => {
         const today = dayjs();
         let filtered = attendanceList;
 
+        // Date filter
         switch (filter) {
             case "today":
-                filtered = attendanceList.filter((att) =>
+                filtered = filtered.filter((att) =>
                     dayjs(att.date).isSame(today, "day")
                 );
                 break;
             case "yesterday":
-                filtered = attendanceList.filter((att) =>
+                filtered = filtered.filter((att) =>
                     dayjs(att.date).isSame(today.subtract(1, "day"), "day")
                 );
                 break;
             case "last3days":
-                filtered = attendanceList.filter((att) =>
+                filtered = filtered.filter((att) =>
                     dayjs(att.date).isAfter(today.subtract(3, "day").startOf("day"))
                 );
                 break;
@@ -52,8 +54,15 @@ const AttendanceList = () => {
                 break;
         }
 
+        // Status filter
+        if (statusFilter !== "all") {
+            filtered = filtered.filter((att) =>
+                att.status && att.status.toLowerCase() === statusFilter
+            );
+        }
+
         setFilteredList(filtered);
-    }, [attendanceList, filter]);
+    }, [attendanceList, filter, statusFilter]);
 
     if (loading)
         return (
@@ -103,18 +112,34 @@ const AttendanceList = () => {
                 Attendance List
             </h2>
 
-            {/* Filter Dropdown */}
-            <div className="mb-4">
-                <label className="mr-2 font-medium text-gray-700">Filter:</label>
-                <select
-                    className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                >
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                    <option value="last3days">Last 3 Days</option>
-                </select>
+            {/* Filter Dropdowns */}
+            <div className="mb-4 flex flex-wrap gap-4 items-center">
+                <div>
+                    <label className="mr-2 font-medium text-gray-700">Date:</label>
+                    <select
+                        className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                    >
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last3days">Last 3 Days</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="mr-2 font-medium text-gray-700">Status:</label>
+                    <select
+                        className="border rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-200"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All</option>
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="half-day">Half-day</option>
+                        <option value="leave">Leave</option>
+                    </select>
+                </div>
             </div>
 
             <div className="overflow-x-auto">

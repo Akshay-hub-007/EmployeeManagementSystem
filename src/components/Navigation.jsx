@@ -33,7 +33,7 @@ const Navigation = ({ isOpen, onClose }) => {
     { path: '/leave', label: 'Leave Management', icon: FileText }
   ];
   console.log(user?.role)
-  const menuItems = user?.role === 'EMPLOYEE' ? hrMenuItems : employeeMenuItems;
+  const menuItems = user?.role === 'ADMIN' ? hrMenuItems : employeeMenuItems;
 
   return (
     <div

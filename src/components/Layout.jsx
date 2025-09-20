@@ -26,7 +26,13 @@ const Layout = () => {
 
     checkAuth();
   }, [navigate]);
+//   useEffect(()=>{
+//     const addAttendencec=async()=>{
+//         const res=await axios.post("http://localhost:8086/attendance/")
+//     }
 
+//     addAttendencec()
+// },[])
   useEffect(() => {
     // Only close sidebar on route change for mobile screens
     if (window.innerWidth < 768) {

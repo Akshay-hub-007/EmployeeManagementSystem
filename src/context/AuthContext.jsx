@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -27,15 +28,46 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      const res = await axios.put(
+        `http://localhost:8086/attendance/${user?.id}/checkout`,
+        {}, 
+        { withCredentials: true } 
+      );
+
+      setUser(null);
+      localStorage.removeItem('user');
+
+      console.log('Logout successful:', res.data);
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+
+  // API call to update user profile
+  const updateProfile = async (updatedData) => {
+    try {
+      const res = await axios.put(
+        `http://localhost:8086/api/users/${user?.id}`,
+        updatedData,
+        { withCredentials: true }
+      );
+      setUser(res.data);
+      localStorage.setItem('user', JSON.stringify(res.data));
+      return { success: true, data: res.data };
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      return { success: false, error };
+    }
   };
 
   const value = {
     user,
     login,
     logout,
+    updateProfile,
     isLoading
   };
 

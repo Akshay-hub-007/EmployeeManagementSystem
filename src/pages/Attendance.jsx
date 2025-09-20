@@ -1,261 +1,143 @@
-import { useState } from 'react';
-import { Calendar, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 const Attendance = () => {
-  const [selectedMonth, setSelectedMonth] = useState('December 2023');
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [todayAttendance, setTodayAttendance] = useState(null);
 
-  const attendanceStats = {
-    present: 22,
-    absent: 2,
-    late: 1,
-    totalWorkingDays: 25,
-    percentage: 88
-  };
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const res = await axios.get("http://localhost:8086/attendance/getAttendenceById",{withCredentials:true});
+        const data = res.data;
+        console.log(data)
+        // Transform API data for table
+        const formatted = data.map((item) => ({
+          date: new Date(item.date).toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          }),
+          status: item.status,
+          checkIn: item.checkInTime
+            ? new Date(item.checkInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "-",
+          checkOut: item.checkOutTime
+            ? new Date(item.checkOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "-",
+          hours: item.workHours ? item.workHours.toFixed(1) : "0",
+        }));
 
-  const monthlyData = [
-    { month: 'Jul', percentage: 92 },
-    { month: 'Aug', percentage: 88 },
-    { month: 'Sep', percentage: 95 },
-    { month: 'Oct', percentage: 90 },
-    { month: 'Nov', percentage: 87 },
-    { month: 'Dec', percentage: 88 }
-  ];
+        setAttendanceRecords(formatted);
 
-  const attendanceRecords = [
-    { date: '2023-12-01', status: 'Present', checkIn: '09:15', checkOut: '18:30', hours: '8.25' },
-    { date: '2023-12-02', status: 'Present', checkIn: '09:00', checkOut: '18:45', hours: '8.75' },
-    { date: '2023-12-03', status: 'Present', checkIn: '08:45', checkOut: '18:15', hours: '8.50' },
-    { date: '2023-12-04', status: 'Present', checkIn: '09:30', checkOut: '18:30', hours: '8.00' },
-    { date: '2023-12-05', status: 'Absent', checkIn: '-', checkOut: '-', hours: '0' },
-    { date: '2023-12-06', status: 'Present', checkIn: '09:00', checkOut: '18:00', hours: '8.00' },
-    { date: '2023-12-07', status: 'Present', checkIn: '08:55', checkOut: '18:25', hours: '8.50' },
-    { date: '2023-12-08', status: 'Present', checkIn: '09:10', checkOut: '18:40', hours: '8.50' },
-    { date: '2023-12-09', status: 'Weekend', checkIn: '-', checkOut: '-', hours: '-' },
-    { date: '2023-12-10', status: 'Weekend', checkIn: '-', checkOut: '-', hours: '-' }
-  ];
+        // Today's record
+        const today = new Date().toISOString().split("T")[0];
+        const todayRecord = data.find((item) => item.date === today);
+        if (todayRecord) {
+          setTodayAttendance({
+            status: todayRecord.status,
+            checkIn: todayRecord.checkInTime
+              ? new Date(todayRecord.checkInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "-",
+            checkOut: todayRecord.checkOutTime
+              ? new Date(todayRecord.checkOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "-",
+            hours: todayRecord.workHours ? todayRecord.workHours.toFixed(1) : "0",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching attendance:", err);
+      }
+    };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Present': return 'var(--secondary-500)';
-      case 'Absent': return 'var(--error-500)';
-      case 'Late': return 'var(--accent-500)';
-      case 'Weekend': return 'var(--gray-400)';
-      default: return 'var(--gray-400)';
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    const badgeClass = status === 'Present' ? 'badge-success' : 
-                       status === 'Absent' ? 'badge-error' :
-                       status === 'Late' ? 'badge-warning' : 'badge-secondary';
-    return <span className={`badge ${badgeClass}`}>{status}</span>;
-  };
+    fetchAttendance();
+  }, []);
 
   return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-10">
-        <div>
-          <h2 className="text-2xl font-semibold mb-1">Attendance Tracking</h2>
-          <p className="text-gray-600 m-0">Monitor your attendance and working hours</p>
-        </div>
-        <select 
-          className="w-auto px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-        >
-          <option value="December 2023">December 2023</option>
-          <option value="November 2023">November 2023</option>
-          <option value="October 2023">October 2023</option>
-        </select>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-start">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-green-50 text-green-600">
-            <CheckCircle size={24} />
+    <div className="p-6 space-y-6">
+      {/* Today's Status */}
+      <div className="shadow-lg border rounded-lg p-4 bg-white">
+        <h2 className="text-lg font-semibold mb-4">Today's Status</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+          <div className="flex flex-col items-center p-4 rounded-lg bg-gray-50">
+            <CheckCircle className="text-green-600 mb-2" size={28} />
+            <p className="font-semibold">Check In</p>
+            <p className="text-lg">{todayAttendance?.checkIn || "-"}</p>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{attendanceStats.present}</div>
-          <div className="text-sm text-gray-600 mb-2">Present Days</div>
-          <div className="text-sm font-medium text-green-500">Out of {attendanceStats.totalWorkingDays} working days</div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-start">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-yellow-50 text-yellow-600">
-            <XCircle size={24} />
+          <div className="flex flex-col items-center p-4 rounded-lg bg-gray-50">
+            <XCircle className="text-red-600 mb-2" size={28} />
+            <p className="font-semibold">Check Out</p>
+            <p className="text-lg">{todayAttendance?.checkOut || "-"}</p>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{attendanceStats.absent}</div>
-          <div className="text-sm text-gray-600 mb-2">Absent Days</div>
-          <div className="text-sm font-medium text-red-500">{attendanceStats.late} late arrivals</div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-start">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-blue-50 text-blue-600">
-            <Clock size={24} />
+          <div className="flex flex-col items-center p-4 rounded-lg bg-gray-50">
+            <Clock className="text-blue-600 mb-2" size={28} />
+            <p className="font-semibold">Worked Hours</p>
+            <p className="text-lg">{todayAttendance?.hours || "0"}</p>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">8.2</div>
-          <div className="text-sm text-gray-600 mb-2">Avg Hours/Day</div>
-          <div className="text-sm font-medium text-green-500">+0.3 from last month</div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-start">
-          <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4 bg-green-50 text-green-600">
-            <TrendingUp size={24} />
+          <div className="flex flex-col items-center p-4 rounded-lg bg-gray-50">
+            <p className="font-semibold">Status</p>
+            <span
+              className={`mt-2 px-3 py-1 rounded-full text-sm font-medium ${
+                todayAttendance?.status === "Present"
+                  ? "bg-green-100 text-green-700"
+                  : todayAttendance?.status === "Absent"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}
+            >
+              {todayAttendance?.status || "Not Recorded"}
+            </span>
           </div>
-          <div className="text-3xl font-bold text-gray-900 mb-1">{attendanceStats.percentage}%</div>
-          <div className="text-sm text-gray-600 mb-2">Attendance Rate</div>
-          <div className="text-sm font-medium text-green-500">Above company average</div>
         </div>
       </div>
 
-      {/* Monthly Trend Chart */}
-      <div className="bg-white rounded-xl shadow p-6 mb-10">
-        <div className="mb-4">
-          <h3 className="text-xl font-semibold text-gray-900">Monthly Attendance Trend</h3>
-          <p className="text-gray-500 text-sm">Attendance percentage over the past 6 months</p>
-        </div>
-        <div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip />
-              <Bar dataKey="percentage" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Calendar View */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-8">
-        {/* Attendance Records */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <div className="mb-4">
-            <h3 className="text-xl font-semibold text-gray-900">Daily Attendance Record</h3>
-            <p className="text-gray-500 text-sm">Detailed view of check-in and check-out times</p>
-          </div>
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full border-collapse bg-white">
-              <thead>
-                <tr>
-                  <th className="bg-gray-50 font-semibold text-gray-700 text-sm px-4 py-3 border-b border-gray-200">Date</th>
-                  <th className="bg-gray-50 font-semibold text-gray-700 text-sm px-4 py-3 border-b border-gray-200">Status</th>
-                  <th className="bg-gray-50 font-semibold text-gray-700 text-sm px-4 py-3 border-b border-gray-200">Check In</th>
-                  <th className="bg-gray-50 font-semibold text-gray-700 text-sm px-4 py-3 border-b border-gray-200">Check Out</th>
-                  <th className="bg-gray-50 font-semibold text-gray-700 text-sm px-4 py-3 border-b border-gray-200">Hours</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceRecords.map((record, index) => (
-                  <tr key={index}>
-                    <td className="font-medium">
-                      {new Date(record.date).toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
+      {/* Attendance History */}
+      <div className="shadow-lg border rounded-lg p-4 bg-white">
+        <h2 className="text-lg font-semibold mb-4">Attendance History</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-100 text-left">
+              <tr>
+                <th className="p-3 border">Date</th>
+                <th className="p-3 border">Status</th>
+                <th className="p-3 border">Check In</th>
+                <th className="p-3 border">Check Out</th>
+                <th className="p-3 border">Hours Worked</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendanceRecords.length > 0 ? (
+                attendanceRecords.map((record, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="p-3 border">{record.date}</td>
+                    <td className="p-3 border">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          record.status === "Present"
+                            ? "bg-green-100 text-green-700"
+                            : record.status === "Absent"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {record.status}
+                      </span>
                     </td>
-                    <td>{getStatusBadge(record.status)}</td>
-                    <td>
-                      {record.checkIn !== '-' ? (
-                        <span className={`${record.checkIn > '09:00' ? 'text-yellow-600' : 'text-green-600'} font-medium`}>
-                          {record.checkIn}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td>
-                      {record.checkOut !== '-' ? (
-                        <span className="font-medium">{record.checkOut}</span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td>
-                      {record.hours !== '-' && record.hours !== '0' ? (
-                        <span className="font-medium">{record.hours}h</span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
+                    <td className="p-3 border">{record.checkIn}</td>
+                    <td className="p-3 border">{record.checkOut}</td>
+                    <td className="p-3 border">{record.hours}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Quick Actions & Summary */}
-        <div className="flex flex-col gap-8">
-          {/* Today's Status */}
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">Today's Status</h3>
-              <p className="text-gray-500 text-sm">Current day information</p>
-            </div>
-            <div>
-              <div className="text-center mb-8">
-                <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-                  <Clock size={32} className="text-green-600" />
-                </div>
-                <div className="text-xl font-semibold mb-1">8.5 hours</div>
-                <div className="text-sm text-gray-600">Worked today</div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <div className="flex justify-between py-2 border-b border-gray-200">
-                  <span className="text-gray-600">Check In</span>
-                  <span className="font-medium">09:15 AM</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-gray-600">Expected Check Out</span>
-                  <span className="font-medium">06:15 PM</span>
-                </div>
-              </div>
-
-              <button 
-                className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors duration-150"
-              >
-                Check Out Now
-              </button>
-            </div>
-          </div>
-
-          {/* Monthly Summary */}
-          <div className="bg-white rounded-xl shadow p-6">
-            <div className="mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">Monthly Summary</h3>
-              <p className="text-gray-500 text-sm">{selectedMonth}</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center p-2 bg-green-50 rounded-lg">
-                <CheckCircle size={20} className="text-green-600 mr-2" />
-                <div className="flex-1">
-                  <div className="text-sm text-green-600">Present</div>
-                  <div className="font-semibold">{attendanceStats.present} days</div>
-                </div>
-              </div>
-              <div className="flex items-center p-2 bg-red-50 rounded-lg">
-                <XCircle size={20} className="text-red-500 mr-2" />
-                <div className="flex-1">
-                  <div className="text-sm text-red-500">Absent</div>
-                  <div className="font-semibold">{attendanceStats.absent} days</div>
-                </div>
-              </div>
-              <div className="flex items-center p-2 bg-yellow-50 rounded-lg">
-                <Clock size={20} className="text-yellow-600 mr-2" />
-                <div className="flex-1">
-                  <div className="text-sm text-yellow-600">Late</div>
-                  <div className="font-semibold">{attendanceStats.late} days</div>
-                </div>
-              </div>
-            </div>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-3 text-center text-gray-500">
+                    No attendance records found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

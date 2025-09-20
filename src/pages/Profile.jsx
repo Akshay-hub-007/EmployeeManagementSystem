@@ -3,20 +3,20 @@ import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, Edit3, Save, X } from 'lucide-react';
 
 const Profile = () => {
-  const { user } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  const { user, updateProfile } = useAuth();
+  const [isEditing, setIsEditing] = useState(true);
   const [formData, setFormData] = useState({
-    name: user?.name || 'John Doe',
-    email: user?.email || 'john.doe@company.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main St, New York, NY 10001',
-    dateOfBirth: '1990-05-15',
-    department: user?.department || 'Engineering',
-    position: user?.position || 'Software Developer',
-    joinDate: '2022-03-15',
-    manager: 'Sarah Johnson',
-    employeeId: 'EMP001',
-    emergencyContact: 'Jane Doe - (555) 987-6543'
+    name: user?.username || '',
+    email: user?.email || '',
+    phone: user?.phoneNumber || '',
+    address: user?.address || '',
+    dateOfBirth: user?.dateOfBirth || '1990-01-01',
+    department: user?.department || '',
+    position: user?.position || '',
+    joinDate: user?.joinedAt || new Date().toISOString().split('T')[0],
+    manager: user?.manager || '',
+    employeeId: user?.id || '',
+    emergencyContact: user?.emergencyContact || ''
   });
 
   const handleInputChange = (e) => {
@@ -26,47 +26,64 @@ const Profile = () => {
     });
   };
 
-  const handleSave = () => {
-    // In a real app, this would update the user data via API
-    console.log('Saving profile data:', formData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    // Prepare data for API (map frontend fields to backend fields if needed)
+    const payload = {
+      username: formData.name,
+      email: formData.email,
+      phoneNumber: formData.phone,
+      address: formData.address,
+      dateOfBirth: formData.dateOfBirth,
+      department: formData.department,
+      position: formData.position,
+      joinedAt: formData.joinDate,
+      manager: formData.manager,
+      id: formData.employeeId,
+      emergencyContact: formData.emergencyContact
+    };
+    const result = await updateProfile(payload);
+    if (result.success) {
+      setIsEditing(false);
+    } else {
+      alert('Failed to update profile.');
+    }
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     setFormData({
-      name: user?.name || 'John Doe',
-      email: user?.email || 'john.doe@company.com',
-      phone: '+1 (555) 123-4567',
-      address: '123 Main St, New York, NY 10001',
-      dateOfBirth: '1990-05-15',
-      department: user?.department || 'Engineering',
-      position: user?.position || 'Software Developer',
-      joinDate: '2022-03-15',
-      manager: 'Sarah Johnson',
-      employeeId: 'EMP001',
-      emergencyContact: 'Jane Doe - (555) 987-6543'
+      name: user?.username || '',
+      email: user?.email || '',
+      phone: user?.phoneNumber || '',
+      address: user?.address || '',
+      dateOfBirth: user?.dateOfBirth || '1990-01-01',
+      department: user?.department || '',
+      position: user?.position || '',
+      joinDate: user?.joinedAt || new Date().toISOString().split('T')[0],
+      manager: user?.manager || '',
+      employeeId: user?.id || '',
+      emergencyContact: user?.emergencyContact || ''
     });
     setIsEditing(false);
   };
 
-  const ProfileField = ({ icon: Icon, label, value, name, type = 'text', editable = true }) => (
+  const ProfileField = ({ icon: Icon, label, value, name, type = 'text', placeholder = '' }) => (
     <div className="mb-6">
-  <label className="flex items-center gap-2 font-medium text-gray-700 mb-1">
+      <label className="flex items-center gap-2 font-medium text-gray-700 mb-1">
         <Icon size={16} />
         {label}
       </label>
-      {isEditing && editable ? (
+      {isEditing ? (
         <input
           type={type}
           name={name}
-          value={value}
+          value={value || ''}
           onChange={handleInputChange}
+          placeholder={placeholder}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       ) : (
         <div className="px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
-          {type === 'date' ? new Date(value).toLocaleDateString() : value}
+          {type === 'date' ? new Date(value).toLocaleDateString() : value || '-'}
         </div>
       )}
     </div>
@@ -118,13 +135,13 @@ const Profile = () => {
             <div className="p-4 bg-green-50 rounded-lg mb-4">
               <p className="text-sm text-green-600 m-0">
                 <strong>Department</strong><br />
-                {formData.department}
+                {formData.department || '-'}
               </p>
             </div>
             <div className="p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-600 m-0">
                 <strong>Joined</strong><br />
-                {new Date(formData.joinDate).toLocaleDateString()}
+                {formData.joinDate ? new Date(formData.joinDate).toLocaleDateString() : '-'}
               </p>
             </div>
           </div>
@@ -137,41 +154,12 @@ const Profile = () => {
             <p className="text-gray-500 text-sm">Your personal and contact details</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <ProfileField
-              icon={User}
-              label="Full Name"
-              value={formData.name}
-              name="name"
-            />
-            <ProfileField
-              icon={Mail}
-              label="Email Address"
-              value={formData.email}
-              name="email"
-              type="email"
-              editable={false}
-            />
-            <ProfileField
-              icon={Phone}
-              label="Phone Number"
-              value={formData.phone}
-              name="phone"
-              type="tel"
-            />
-            <ProfileField
-              icon={Calendar}
-              label="Date of Birth"
-              value={formData.dateOfBirth}
-              name="dateOfBirth"
-              type="date"
-            />
+            <ProfileField icon={User} label="Full Name" value={formData.name} name="name" placeholder="Enter full name" />
+            <ProfileField icon={Mail} label="Email Address" value={formData.email} name="email" type="email" placeholder="Enter email address" />
+            <ProfileField icon={Phone} label="Phone Number" value={formData.phone} name="phone" type="tel" placeholder="Enter phone number" />
+            <ProfileField icon={Calendar} label="Date of Birth" value={formData.dateOfBirth} name="dateOfBirth" type="date" placeholder="Select date of birth" />
             <div className="md:col-span-2">
-              <ProfileField
-                icon={MapPin}
-                label="Address"
-                value={formData.address}
-                name="address"
-              />
+              <ProfileField icon={MapPin} label="Address" value={formData.address} name="address" placeholder="Enter address" />
             </div>
           </div>
         </div>
@@ -184,42 +172,12 @@ const Profile = () => {
           <p className="text-gray-500 text-sm">Job details and organizational information</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ProfileField
-            icon={Briefcase}
-            label="Position"
-            value={formData.position}
-            name="position"
-            editable={false}
-          />
-          <ProfileField
-            icon={User}
-            label="Department"
-            value={formData.department}
-            name="department"
-            editable={false}
-          />
-          <ProfileField
-            icon={User}
-            label="Reporting Manager"
-            value={formData.manager}
-            name="manager"
-            editable={false}
-          />
-          <ProfileField
-            icon={Calendar}
-            label="Join Date"
-            value={formData.joinDate}
-            name="joinDate"
-            type="date"
-            editable={false}
-          />
+          <ProfileField icon={Briefcase} label="Position" value={formData.position} name="position" placeholder="Enter position" />
+          <ProfileField icon={User} label="Department" value={formData.department} name="department" placeholder="Enter department" />
+          <ProfileField icon={User} label="Reporting Manager" value={formData.manager} name="manager" placeholder="Enter manager name" />
+          <ProfileField icon={Calendar} label="Join Date" value={formData.joinDate} name="joinDate" type="date" placeholder="Select join date" />
           <div className="md:col-span-2">
-            <ProfileField
-              icon={Phone}
-              label="Emergency Contact"
-              value={formData.emergencyContact}
-              name="emergencyContact"
-            />
+            <ProfileField icon={Phone} label="Emergency Contact" value={formData.emergencyContact} name="emergencyContact" placeholder="Enter emergency contact" />
           </div>
         </div>
       </div>
