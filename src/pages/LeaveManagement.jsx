@@ -1,162 +1,36 @@
+// LeaveManagement.jsx
 import { useState } from 'react';
 import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
-const LeaveManagement = () => {
-  const { user } = useAuth();
-  const [showModal, setShowModal] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [formData, setFormData] = useState({
-    type: 'Annual',
-    startDate: '',
-    endDate: '',
-    reason: '',
-    emergencyContact: ''
-  });
-
-  const leaveBalance = {
-    annual: { used: 8, total: 25 },
-    sick: { used: 2, total: 10 },
-    personal: { used: 1, total: 5 },
-    emergency: { used: 0, total: 3 }
-  };
-
-  const leaveRequests = [
-    {
-      id: 1,
-      type: 'Annual Leave',
-      startDate: '2023-12-25',
-      endDate: '2023-12-27',
-      days: 3,
-      reason: 'Christmas holiday with family',
-      status: 'Pending',
-      appliedDate: '2023-12-15',
-      approvedBy: null
-    },
-    {
-      id: 2,
-      type: 'Sick Leave',
-      startDate: '2023-11-20',
-      endDate: '2023-11-21',
-      days: 2,
-      reason: 'Flu symptoms',
-      status: 'Approved',
-      appliedDate: '2023-11-19',
-      approvedBy: 'Sarah Johnson'
-    },
-    {
-      id: 3,
-      type: 'Annual Leave',
-      startDate: '2023-10-15',
-      endDate: '2023-10-19',
-      days: 5,
-      reason: 'Vacation trip',
-      status: 'Approved',
-      appliedDate: '2023-10-01',
-      approvedBy: 'Sarah Johnson'
-    },
-    {
-      id: 4,
-      type: 'Personal Leave',
-      startDate: '2023-09-10',
-      endDate: '2023-09-10',
-      days: 1,
-      reason: 'Personal appointment',
-      status: 'Rejected',
-      appliedDate: '2023-09-08',
-      approvedBy: 'Sarah Johnson'
-    }
-  ];
-
-  // HR specific data
-  const teamLeaveRequests = [
-    {
-      id: 1,
-      employee: 'John Doe',
-      type: 'Annual Leave',
-      startDate: '2023-12-25',
-      endDate: '2023-12-27',
-      days: 3,
-      reason: 'Christmas holiday with family',
-      status: 'Pending',
-      appliedDate: '2023-12-15'
-    },
-    {
-      id: 2,
-      employee: 'Mike Johnson',
-      type: 'Sick Leave',
-      startDate: '2023-12-18',
-      endDate: '2023-12-18',
-      days: 1,
-      reason: 'Doctor appointment',
-      status: 'Pending',
-      appliedDate: '2023-12-17'
-    },
-    {
-      id: 3,
-      employee: 'Sarah Wilson',
-      type: 'Annual Leave',
-      startDate: '2023-12-30',
-      endDate: '2024-01-03',
-      days: 5,
-      reason: 'New Year vacation',
-      status: 'Approved',
-      appliedDate: '2023-12-10'
-    }
-  ];
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Approved': return <CheckCircle size={16} className="text-green-600" />;
-      case 'Pending': return <Clock size={16} className="text-yellow-600" />;
-      case 'Rejected': return <XCircle size={16} className="text-red-500" />;
-      default: return <AlertCircle size={16} className="text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    const badgeClass = status === 'Approved'
-      ? 'bg-green-100 text-green-700 border-green-300'
-      : status === 'Pending'
-      ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
-      : 'bg-red-100 text-red-700 border-red-300';
-    return (
-      <span className={`inline-block px-3 py-1 rounded-full border text-xs font-semibold ${badgeClass}`}>{status}</span>
-    );
-  };
-
-  const calculateDays = (startDate, endDate) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-  };
-
+// ---------------- Modal Component ----------------
+const LeaveApplicationModal = ({ setShowModal, formData, setFormData, handleSubmit, calculateDays }) => {
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Leave request submitted:', formData);
-    setShowModal(false);
-    setFormData({
-      type: 'Annual',
-      startDate: '',
-      endDate: '',
-      reason: '',
-      emergencyContact: ''
-    });
-  };
-
-  const LeaveApplicationModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40" onClick={() => setShowModal(false)}>
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 animate-fade-in" onClick={e => e.stopPropagation()}>
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+      onClick={() => setShowModal(false)}
+    >
+      <div
+        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center border-b px-6 py-4">
           <h3 className="text-lg font-semibold">Apply for Leave</h3>
-          <button className="text-2xl text-gray-400 hover:text-gray-600" onClick={() => setShowModal(false)}>&times;</button>
+          <button
+            className="text-2xl text-gray-400 hover:text-gray-600"
+            onClick={() => setShowModal(false)}
+          >
+            &times;
+          </button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-4 space-y-4">
@@ -211,9 +85,9 @@ const LeaveManagement = () => {
               <label className="block font-medium mb-1">Reason</label>
               <textarea
                 name="reason"
-                value={formData.reason}
+                value={formData.reason || ''}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 rows="3"
                 placeholder="Please provide a reason for your leave request..."
                 required
@@ -233,10 +107,17 @@ const LeaveManagement = () => {
             </div>
           </div>
           <div className="flex justify-end gap-2 border-t px-6 py-4">
-            <button type="button" className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium" onClick={() => setShowModal(false)}>
+            <button
+              type="button"
+              className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium"
+              onClick={() => setShowModal(false)}
+            >
               Cancel
             </button>
-            <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium">
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            >
               Submit Request
             </button>
           </div>
@@ -244,10 +125,101 @@ const LeaveManagement = () => {
       </div>
     </div>
   );
+};
 
-  const filteredRequests = user?.role === 'hr' 
-    ? teamLeaveRequests.filter(req => selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus)
-    : leaveRequests.filter(req => selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus);
+// ---------------- Main Component ----------------
+const LeaveManagement = () => {
+  const { user } = useAuth();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [formData, setFormData] = useState({
+    type: 'Annual',
+    startDate: '',
+    endDate: '',
+    reason: '',
+    emergencyContact: '',
+  });
+
+  const leaveBalance = {
+    annual: { used: 8, total: 25 },
+    sick: { used: 2, total: 10 },
+    personal: { used: 1, total: 5 },
+    emergency: { used: 0, total: 3 },
+  };
+
+  const leaveRequests = [
+    {
+      id: 1,
+      type: 'Annual Leave',
+      startDate: '2023-12-25',
+      endDate: '2023-12-27',
+      days: 3,
+      reason: 'Christmas holiday with family',
+      status: 'Pending',
+      appliedDate: '2023-12-15',
+      approvedBy: null,
+    },
+    {
+      id: 2,
+      type: 'Sick Leave',
+      startDate: '2023-11-20',
+      endDate: '2023-11-21',
+      days: 2,
+      reason: 'Flu symptoms',
+      status: 'Approved',
+      appliedDate: '2023-11-19',
+      approvedBy: 'Sarah Johnson',
+    },
+  ];
+
+  const getStatusBadge = (status) => {
+    const badgeClass =
+      status === 'Approved'
+        ? 'bg-green-100 text-green-700 border-green-300'
+        : status === 'Pending'
+        ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+        : 'bg-red-100 text-red-700 border-red-300';
+    return (
+      <span
+        className={`inline-block px-3 py-1 rounded-full border text-xs font-semibold ${badgeClass}`}
+      >
+        {status}
+      </span>
+    );
+  };
+
+  const calculateDays = (startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const res = await axios.post('http://localhost:8086/leave/apply', formData, {
+      withCredentials: true,
+    });
+    console.log(res.data);
+    setShowModal(false);
+    setFormData({
+      type: 'Annual',
+      startDate: '',
+      endDate: '',
+      reason: '',
+      emergencyContact: '',
+    });
+  };
+
+  const filteredRequests =
+    user?.role === 'hr'
+      ? leaveRequests.filter(
+          (req) =>
+            selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus
+        )
+      : leaveRequests.filter(
+          (req) =>
+            selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus
+        );
 
   return (
     <div className="animate-fade-in">
@@ -264,21 +236,28 @@ const LeaveManagement = () => {
           </p>
         </div>
         {user?.role !== 'hr' && (
-          <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150" onClick={() => setShowModal(true)}>
+          <button
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-150"
+            onClick={() => setShowModal(true)}
+          >
             <Plus size={16} />
             Apply for Leave
           </button>
         )}
       </div>
 
-      {/* Leave Balance - Employee only */}
+      {/* Leave Balance */}
       {user?.role !== 'hr' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-10">
           {Object.entries(leaveBalance).map(([type, balance]) => (
             <div key={type} className="bg-white rounded-xl shadow p-6">
               <div className="text-center">
-                <div className="text-lg font-semibold mb-1 capitalize">{type} Leave</div>
-                <div className="text-3xl font-bold mb-2">{balance.total - balance.used}</div>
+                <div className="text-lg font-semibold mb-1 capitalize">
+                  {type} Leave
+                </div>
+                <div className="text-3xl font-bold mb-2">
+                  {balance.total - balance.used}
+                </div>
                 <div className="text-sm text-gray-600 mb-4">Available days</div>
                 <div className="flex justify-between border-t pt-2 text-sm">
                   <span>Used: {balance.used}</span>
@@ -298,7 +277,7 @@ const LeaveManagement = () => {
             <select
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
+              onChange={(e) => setSelectedStatus(e.target.value)}
               style={{ width: 'auto' }}
             >
               <option value="all">All Status</option>
@@ -313,52 +292,42 @@ const LeaveManagement = () => {
       {/* Leave Requests Table */}
       <div className="bg-white rounded-xl shadow">
         <div className="border-b px-6 py-4">
-          <h3 className="text-lg font-semibold">{user?.role === 'hr' ? 'Team Leave Requests' : 'Leave Request History'}</h3>
-          <p className="text-gray-500 text-sm">
-            {user?.role === 'hr'
-              ? 'Review and manage employee leave requests'
-              : 'Track your submitted leave applications'}
-          </p>
+          <h3 className="text-lg font-semibold">
+            {user?.role === 'hr' ? 'Team Leave Requests' : 'Leave Request History'}
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
-                {user?.role === 'hr' && <th className="px-4 py-2 text-left font-semibold">Employee</th>}
                 <th className="px-4 py-2 text-left font-semibold">Leave Type</th>
                 <th className="px-4 py-2 text-left font-semibold">Start Date</th>
                 <th className="px-4 py-2 text-left font-semibold">End Date</th>
                 <th className="px-4 py-2 text-left font-semibold">Days</th>
                 <th className="px-4 py-2 text-left font-semibold">Status</th>
                 <th className="px-4 py-2 text-left font-semibold">Applied On</th>
-                {user?.role === 'hr' ? <th className="px-4 py-2 text-left font-semibold">Actions</th> : <th className="px-4 py-2 text-left font-semibold">Approved By</th>}
+                <th className="px-4 py-2 text-left font-semibold">Approved By</th>
               </tr>
             </thead>
             <tbody>
               {filteredRequests.map((request) => (
                 <tr key={request.id} className="border-b last:border-0">
-                  {user?.role === 'hr' && (
-                    <td className="px-4 py-2 font-medium">{request.employee}</td>
-                  )}
                   <td className="px-4 py-2">{request.type}</td>
-                  <td className="px-4 py-2">{new Date(request.startDate).toLocaleDateString()}</td>
-                  <td className="px-4 py-2">{new Date(request.endDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-2">
+                    {new Date(request.startDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2">
+                    {new Date(request.endDate).toLocaleDateString()}
+                  </td>
                   <td className="px-4 py-2 font-medium">{request.days}</td>
                   <td className="px-4 py-2">{getStatusBadge(request.status)}</td>
-                  <td className="px-4 py-2">{new Date(request.appliedDate).toLocaleDateString()}</td>
                   <td className="px-4 py-2">
-                    {user?.role === 'hr' ? (
-                      request.status === 'Pending' ? (
-                        <div className="flex gap-2">
-                          <button className="px-3 py-1 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-xs font-semibold">Approve</button>
-                          <button className="px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold">Reject</button>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-600">{request.status}</span>
-                      )
-                    ) : (
-                      <span className="text-sm text-gray-600">{request.approvedBy || '-'}</span>
-                    )}
+                    {new Date(request.appliedDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className="text-sm text-gray-600">
+                      {request.approvedBy || '-'}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -367,8 +336,16 @@ const LeaveManagement = () => {
         </div>
       </div>
 
-      {/* Leave Application Modal */}
-      {showModal && <LeaveApplicationModal />}
+      {/* Modal */}
+      {showModal && (
+        <LeaveApplicationModal
+          setShowModal={setShowModal}
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          calculateDays={calculateDays}
+        />
+      )}
     </div>
   );
 };

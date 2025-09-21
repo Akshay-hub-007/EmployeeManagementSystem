@@ -54,10 +54,11 @@ export const AuthProvider = ({ children }) => {
         updatedData,
         { withCredentials: true }
       );
-      console.log(res)
+      console.log(res.data)
+
       setUser(res.data)
-      // setUser(res.data);
-      // localStorage.setItem('user', JSON.stringify(res.data));
+      setUser(res.data);
+      localStorage.setItem('user', JSON.stringify(res.data));
       return { success: true, data: res.data };
     } catch (error) {
       console.error('Profile update failed:', error);

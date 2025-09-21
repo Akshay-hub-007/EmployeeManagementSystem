@@ -9,7 +9,8 @@ import {
   FileText, 
   BarChart3,
   LogOut, 
-  List
+  List,
+  CalendarX
 } from 'lucide-react';
 
 const Navigation = ({ isOpen, onClose }) => {
@@ -22,7 +23,8 @@ const Navigation = ({ isOpen, onClose }) => {
     { path: '/leave', label: 'Leave Requests', icon: FileText },
     { path: '/attendance', label: 'Attendance', icon: Calendar },
     {path:'/attendance-list',label:'Attendence List',icon:List},
-    { path: '/profile', label: 'Profile', icon: User }
+    { path: '/profile', label: 'Profile', icon: User },
+      {path:'/leave/grant',label:'Leave Requests',icon:CalendarX}
   ];
 
   const employeeMenuItems = [

@@ -11,10 +11,11 @@ import Salary from './pages/Salary';
 import Attendance from './pages/Attendance';
 import LeaveManagement from './pages/LeaveManagement';
 import AttendenceList from './pages/AttendenceList';
+import LeaveRequest from './pages/LeaveRequest';
 // import './App.css';
 
 function App() {
-  
+
   return (
     <AuthProvider>
       <Router>
@@ -33,8 +34,10 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="salary" element={<Salary />} />
               <Route path="attendance" element={<Attendance />} />
-              <Route path="attendance-list" element={<AttendenceList/>}/>
+              <Route path="attendance-list" element={<AttendenceList />} />
               <Route path="leave" element={<LeaveManagement />} />
+              <Route path='leave/grant' element={<LeaveRequest />} />
+
             </Route>
           </Routes>
         </div>

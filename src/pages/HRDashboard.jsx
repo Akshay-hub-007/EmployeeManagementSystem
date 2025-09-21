@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const HRDashboard = () => {
 
     const {user,login}=useAuth()
-    console.log(user.role)
+    
   const stats = [
     {
       icon: Users,
