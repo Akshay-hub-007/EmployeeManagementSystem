@@ -12,6 +12,7 @@ import Attendance from './pages/Attendance';
 import LeaveManagement from './pages/LeaveManagement';
 import AttendenceList from './pages/AttendenceList';
 import LeaveRequest from './pages/LeaveRequest';
+import Register from './components/Register';
 // import './App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <div className="min-h-screen w-full bg-gray-50">
           <Routes>
             <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Layout />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Filter } from "lucide-react";
 import axios from "axios";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const LeaveRequest = () => {
   const [requests, setRequests] = useState([]);
@@ -45,10 +46,11 @@ const LeaveRequest = () => {
     if (!req) return;
     try {
       const res = await axios.put(
-        `http://localhost:8086/leave/requests/${id}`,
+        `${BACKEND_URL}/leave/requests/${id}`,
         { status: req.status },
         { withCredentials: true }
       );
+      console.log(res)
       setPendingSaves((prev) => prev.filter((pid) => pid !== id));
       setMessage({ type: "success", text: res.data });
       setTimeout(() => setMessage(null), 3000);

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const Login = () => {
   const { user, login } = useAuth();
   const [role, setRole] = useState('employee');
@@ -16,7 +18,7 @@ const Login = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get("http://localhost:8086/authenticated", {
+  const res = await axios.get(`${BACKEND_URL}/authenticated`, {
           withCredentials: true,
         });
 
@@ -45,7 +47,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:8086/sign", {
+  const res = await axios.post(`${BACKEND_URL}/sign`, {
         email: formData.email,
         password: formData.password,
       }, { withCredentials: true });
@@ -75,7 +77,7 @@ const Login = () => {
           <p className="text-gray-500">Sign in to your account</p>
         </div>
 
-        <div className="flex mb-8 gap-2">
+        {/* <div className="flex mb-8 gap-2">
           <div
             className={`flex-1 cursor-pointer rounded-lg px-4 py-3 border text-center transition-all duration-150 ${role === 'employee' ? 'bg-blue-600 text-white border-blue-600 shadow' : 'bg-gray-50 text-gray-700 border-gray-300'}`}
             onClick={() => setRole('employee')}
@@ -90,7 +92,7 @@ const Login = () => {
             <div className="font-medium">HR Manager</div>
             <div className="text-sm opacity-70">Manage employees</div>
           </div>
-        </div>
+        </div> */}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
@@ -126,9 +128,11 @@ const Login = () => {
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
-
         </form>
-
+        <div className="text-center mt-2">
+          <span className="text-gray-600">Don't have an account? </span>
+          <a href="/register" className="text-blue-600 hover:underline font-medium">Sign up</a>
+        </div>
       </div>
     </div>
   );

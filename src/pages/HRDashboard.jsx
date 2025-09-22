@@ -1,3 +1,8 @@
+
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { Users, UserCheck, UserX, TrendingUp, Calendar, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAuth } from '../context/AuthContext';
@@ -5,30 +10,90 @@ import { useAuth } from '../context/AuthContext';
 const HRDashboard = () => {
 
     const {user,login}=useAuth()
-    
+
+  const [employees, setEmployees] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [attendanceList, setAttendanceList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch leave requests
+  useEffect(() => {
+    const getRequests = async () => {
+      try {
+  const res = await axios.get(`${BACKEND_URL}/leave/requests`, {
+          withCredentials: true,
+        });
+        setRequests(res.data);
+      } catch (err) {
+        console.error("Failed to fetch requests:", err);
+      }
+    };
+    getRequests();
+  }, []);
+
+  // Fetch employees
+  useEffect(() => {
+    const getEmployees = async () => {
+      try {
+  const res = await axios.get(`${BACKEND_URL}/employees`, { withCredentials: true });
+        setEmployees(res.data);
+      } catch (err) {
+        console.error("Failed to fetch employees:", err);
+      }
+    };
+    getEmployees();
+  }, []);
+
+  // Fetch attendance
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const response = await axios.get(
+          `${BACKEND_URL}/attendance/getAttendence`,
+          { withCredentials: true }
+        );
+        setAttendanceList(response.data);
+      } catch (error) {
+        console.error("Error fetching attendance data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAttendance();
+  }, []);
+
+  // Calculate stats
+  const totalEmployees = employees.length;
+  // Present today: count attendanceList with today's date and status 'Present'
+  const today = new Date().toISOString().split('T')[0];
+  const presentToday = attendanceList.filter(a => a.date === today && a.status === 'Present').length;
+  const attendancePercent = totalEmployees > 0 ? ((presentToday / totalEmployees) * 100).toFixed(1) : '0';
+  const leaveRequestCount = requests.length;
+  const pendingLeaveCount = requests.filter(r => r.status === 'Pending').length;
+
   const stats = [
     {
       icon: Users,
       label: 'Total Employees',
-      value: '147',
-      change: '+12 this month',
+      value: totalEmployees,
+      change: '',
       positive: true,
       color: 'primary'
     },
     {
       icon: UserCheck,
       label: 'Present Today',
-      value: '134',
-      change: '91.2% attendance',
+      value: presentToday,
+      change: `${attendancePercent}% attendance`,
       positive: true,
       color: 'secondary'
     },
     {
       icon: FileText,
       label: 'Leave Requests',
-      value: '8',
-      change: '3 pending',
-      positive: false,
+      value: leaveRequestCount,
+      change: `${pendingLeaveCount} pending`,
+      positive: pendingLeaveCount === 0,
       color: 'accent'
     },
     {

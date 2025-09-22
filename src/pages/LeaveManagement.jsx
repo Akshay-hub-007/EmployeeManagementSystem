@@ -1,8 +1,9 @@
-// LeaveManagement.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // ---------------- Modal Component ----------------
 const LeaveApplicationModal = ({ setShowModal, formData, setFormData, handleSubmit, calculateDays }) => {
@@ -139,6 +140,7 @@ const LeaveManagement = () => {
     reason: '',
     emergencyContact: '',
   });
+  const [leaveRequests, setLeaveRequests] = useState([]);
 
   const leaveBalance = {
     annual: { used: 8, total: 25 },
@@ -147,30 +149,32 @@ const LeaveManagement = () => {
     emergency: { used: 0, total: 3 },
   };
 
-  const leaveRequests = [
-    {
-      id: 1,
-      type: 'Annual Leave',
-      startDate: '2023-12-25',
-      endDate: '2023-12-27',
-      days: 3,
-      reason: 'Christmas holiday with family',
-      status: 'Pending',
-      appliedDate: '2023-12-15',
-      approvedBy: null,
-    },
-    {
-      id: 2,
-      type: 'Sick Leave',
-      startDate: '2023-11-20',
-      endDate: '2023-11-21',
-      days: 2,
-      reason: 'Flu symptoms',
-      status: 'Approved',
-      appliedDate: '2023-11-19',
-      approvedBy: 'Sarah Johnson',
-    },
-  ];
+  // Fetch leave requests for the employee
+  useEffect(() => {
+    if (!user?.id) return;
+    const getDetails = async () => {
+      try {
+  const res = await axios.get(`${BACKEND_URL}/leave/getleaves/${user.id}`, { withCredentials: true });
+        setLeaveRequests(
+          res.data.map((req) => ({
+            ...req,
+            days:
+              req.startDate && req.endDate
+                ? Math.ceil(
+                    (new Date(req.endDate) - new Date(req.startDate)) /
+                      (1000 * 60 * 60 * 24)
+                  ) + 1
+                : 1,
+            appliedDate: req.createdAt || req.appliedAt,
+            approvedBy: req.approvedBy || null,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch leave requests", err);
+      }
+    };
+    getDetails();
+  }, [user?.id]);
 
   const getStatusBadge = (status) => {
     const badgeClass =
@@ -196,10 +200,9 @@ const LeaveManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await axios.post('http://localhost:8086/leave/apply', formData, {
+  await axios.post(`${BACKEND_URL}/leave/apply`, formData, {
       withCredentials: true,
     });
-    console.log(res.data);
     setShowModal(false);
     setFormData({
       type: 'Annual',
@@ -208,18 +211,31 @@ const LeaveManagement = () => {
       reason: '',
       emergencyContact: '',
     });
+    // Refresh leave requests after applying
+    if (user?.id) {
+  const res = await axios.get(`${BACKEND_URL}/leave/getleaves/${user.id}`, { withCredentials: true });
+      setLeaveRequests(
+        res.data.map((req) => ({
+          ...req,
+          days:
+            req.startDate && req.endDate
+              ? Math.ceil(
+                  (new Date(req.endDate) - new Date(req.startDate)) /
+                    (1000 * 60 * 60 * 24)
+                ) + 1
+              : 1,
+          appliedDate: req.createdAt || req.appliedAt,
+          approvedBy: req.approvedBy || null,
+        }))
+      );
+    }
   };
 
-  const filteredRequests =
-    user?.role === 'hr'
-      ? leaveRequests.filter(
-          (req) =>
-            selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus
-        )
-      : leaveRequests.filter(
-          (req) =>
-            selectedStatus === 'all' || req.status.toLowerCase() === selectedStatus
-        );
+  const filteredRequests = leaveRequests.filter(
+    (req) =>
+      selectedStatus === 'all' ||
+      req.status?.toLowerCase() === selectedStatus
+  );
 
   return (
     <div className="animate-fade-in">
@@ -322,7 +338,9 @@ const LeaveManagement = () => {
                   <td className="px-4 py-2 font-medium">{request.days}</td>
                   <td className="px-4 py-2">{getStatusBadge(request.status)}</td>
                   <td className="px-4 py-2">
-                    {new Date(request.appliedDate).toLocaleDateString()}
+                    {request.appliedDate
+                      ? new Date(request.appliedDate).toLocaleDateString()
+                      : '-'}
                   </td>
                   <td className="px-4 py-2">
                     <span className="text-sm text-gray-600">

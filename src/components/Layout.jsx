@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from './Navigation';
 import TopBar from './TopBar';
 import axios from 'axios';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import { useAuth } from '../context/AuthContext';
+
 const Layout = () => {
+  const {user}=useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const attendanceCalled = useRef(false);
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get("http://localhost:8086/authenticated", {
+  const res = await axios.get(`${BACKEND_URL}/authenticated`, {
           withCredentials: true,
         });
 
@@ -26,13 +31,14 @@ const Layout = () => {
 
     checkAuth();
   }, [navigate]);
-  useEffect(()=>{
-    const addAttendence=async()=>{
-        const res=await axios.post("http://localhost:8086/attendance/checkin",{},{withCredentials:true})
-        console.log(res)
-    }
-    addAttendence()
-},[])
+  useEffect(() => {
+    if (attendanceCalled.current) return;
+    attendanceCalled.current = true;
+    const addAttendence = async () => {
+  await axios.post(`${BACKEND_URL}/attendance/checkin`, {}, { withCredentials: true });
+    };
+    addAttendence();
+  }, [])
   useEffect(() => {
     // Only close sidebar on route change for mobile screens
     if (window.innerWidth < 768) {
@@ -43,6 +49,11 @@ const Layout = () => {
     const path = location.pathname;
     switch (path) {
       case '/':
+        if (user && user.role === "EMPLOYEE") {
+          return 'Employee Dashboard';
+        } else {
+          return 'HR Dashboard';
+        }
       case '/hr-dashboard':
         return 'HR Dashboard';
       case '/employee-dashboard':

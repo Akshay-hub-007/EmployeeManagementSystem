@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 const Attendance = () => {
@@ -9,7 +11,7 @@ const Attendance = () => {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const res = await axios.get("http://localhost:8086/attendance/getAttendenceById",{withCredentials:true});
+        const res = await axios.get(`${BACKEND_URL}/attendance/getAttendenceById`,{withCredentials:true});
         const data = res.data;
         console.log(data)
         // Transform API data for table

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Search, Plus, Filter, Edit, Eye } from 'lucide-react';
 import axios from 'axios';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +17,7 @@ const EmployeeList = () => {
   useEffect(() => {
     const getEmployees = async () => {
       try {
-        const res = await axios.get("http://localhost:8086/employees", { withCredentials: true });
+  const res = await axios.get(`${BACKEND_URL}/employees`, { withCredentials: true });
         setEmployees(res.data);
       } catch (err) {
         console.error("Failed to fetch employees:", err);
@@ -50,6 +52,19 @@ const EmployeeList = () => {
       {label}
     </button>
   );
+
+  // Toggle user role
+  const handleToggleRole = async (id) => {
+    try {
+  await axios.put(`${BACKEND_URL}/toggleRole/${id}`, {}, { withCredentials: true });
+  // Refresh employees after role change
+  const res = await axios.get(`${BACKEND_URL}/employees`, { withCredentials: true });
+  setEmployees(res.data);
+    } catch (err) {
+      alert("Failed to update user role");
+      console.error(err);
+    }
+  };
 
   // Employee modal
   const EmployeeModal = ({ employee, onClose }) => {
@@ -107,7 +122,7 @@ const EmployeeList = () => {
       </div>
     );
   };
-
+  console.log(filteredEmployees)
   return (
     <div className="animate-fade-in p-6">
       {/* Header */}
@@ -186,8 +201,8 @@ const EmployeeList = () => {
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${emp.status === 'Present'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
                         }`}
                     >
                       {emp.status === 'Present' ? 'Present' : 'Absent'}
@@ -211,6 +226,23 @@ const EmployeeList = () => {
                         label="Edit"
                         onClick={() => console.log('Edit', emp.id)}
                       />
+                      {emp.role === 'ADMIN' ? (
+                        <button
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium bg-yellow-500 text-white hover:bg-yellow-600"
+                          onClick={() => handleToggleRole(emp.id)}
+                          title="Make Employee"
+                        >
+                          Make Employee
+                        </button>
+                      ) : (
+                        <button
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700"
+                          onClick={() => handleToggleRole(emp.id)}
+                          title="Make Admin"
+                        >
+                          Make Admin
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

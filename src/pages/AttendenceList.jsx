@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import dayjs from "dayjs"; // install dayjs for date handling
 
@@ -14,7 +16,7 @@ const AttendanceList = () => {
         const fetchAttendance = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:8086/attendance/getAttendence",
+                    `${BACKEND_URL}/attendance/getAttendence`,
                     { withCredentials: true }
                 );
                 setAttendanceList(response.data);

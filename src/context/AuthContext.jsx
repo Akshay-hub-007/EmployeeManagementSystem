@@ -1,4 +1,6 @@
 import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -28,32 +30,39 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = async () => {
-    try {
-      const res = await axios.put(
-        `http://localhost:8086/attendance/${user?.id}/checkout`,
-        {}, 
-        { withCredentials: true } 
-      );
+const logout = async () => {
+  try {
+    // Step 1: Checkout attendance (if required before logout)
 
-      setUser(null);
-      localStorage.removeItem('user');
+    await axios.put(
+      `${BACKEND_URL}/attendance/${user?.id}/checkout`,
+      {},
+      { withCredentials: true }
+    );
 
-      console.log('Logout successful:', res.data);
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+    // Step 2: Call logout to clear JWT cookie
+  const res = await axios.post(`${BACKEND_URL}/api/logout`, {}, { withCredentials: true });
+
+    // Step 3: Clear local state
+    setUser(null);
+    localStorage.removeItem('user');
+    window.location.reload()
+    console.log('Logout successful:', res.data);
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
+
 
 
   // API call to update user profile
   const updateProfile = async (updatedData) => {
     try {
       const res = await axios.put(
-        `http://localhost:8086/updateDetails/${user?.id}`,
-        updatedData,
-        { withCredentials: true }
-      );
+          `${BACKEND_URL}/updateDetails/${user?.id}`,
+          updatedData,
+          { withCredentials: true }
+        );
       console.log(res.data)
 
       setUser(res.data)
