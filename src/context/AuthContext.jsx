@@ -1,4 +1,5 @@
 import axios from 'axios';
+import BACKEND_URL from "../config/backend";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 import { createContext, useContext, useState, useEffect } from 'react';

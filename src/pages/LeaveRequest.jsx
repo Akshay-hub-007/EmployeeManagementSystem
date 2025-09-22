@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Filter } from "lucide-react";
 import axios from "axios";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import BACKEND_URL from "../config/backend";
 
 const LeaveRequest = () => {
   const [requests, setRequests] = useState([]);

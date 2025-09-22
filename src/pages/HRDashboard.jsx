@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import BACKEND_URL from "../config/backend";
 import { Users, UserCheck, UserX, TrendingUp, Calendar, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAuth } from '../context/AuthContext';

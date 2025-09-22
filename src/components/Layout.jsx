@@ -3,8 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from './Navigation';
 import TopBar from './TopBar';
 import axios from 'axios';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import BACKEND_URL from "../config/backend";
 import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {

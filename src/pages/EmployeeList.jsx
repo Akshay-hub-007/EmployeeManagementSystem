@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Plus, Filter, Edit, Eye } from 'lucide-react';
 import axios from 'axios';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import BACKEND_URL from "../config/backend";
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);

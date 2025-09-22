@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import BACKEND_URL from "../config/backend";
 import { Clock, DollarSign, Calendar, Award, User, FileText } from 'lucide-react';
 import { useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
